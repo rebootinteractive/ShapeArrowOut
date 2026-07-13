@@ -5,8 +5,8 @@ export interface Settings {
 }
 
 export const DEFAULT_SETTINGS: Settings = {
-  shapeRadius: 1.85,
-  tiltDeg: 35,
+  shapeRadius: 2.2,
+  tiltDeg: 50,
 };
 
 const KEY = 'sao:settings';

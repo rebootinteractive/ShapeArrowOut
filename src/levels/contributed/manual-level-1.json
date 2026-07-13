@@ -1,0 +1,81 @@
+{
+  "id": "custom-1783946214836",
+  "name": "Manual Level 1",
+  "shape": "heart",
+  "loops": [
+    {
+      "segments": [
+        { "color": "red", "dots": 12 },
+        { "color": "blue", "dots": 12 },
+        { "color": "green", "dots": 12 },
+        { "color": "yellow", "dots": 12 }
+      ]
+    },
+    {
+      "segments": [
+        { "color": "blue", "dots": 10 },
+        { "color": "green", "dots": 10 },
+        { "color": "yellow", "dots": 10 },
+        { "color": "red", "dots": 10 }
+      ]
+    },
+    {
+      "segments": [
+        { "color": "green", "dots": 8 },
+        { "color": "yellow", "dots": 8 },
+        { "color": "red", "dots": 8 },
+        { "color": "blue", "dots": 8 }
+      ]
+    },
+    {
+      "segments": [
+        { "color": "yellow", "dots": 6 },
+        { "color": "red", "dots": 6 },
+        { "color": "blue", "dots": 6 },
+        { "color": "green", "dots": 6 }
+      ]
+    }
+  ],
+  "lapSeconds": 12,
+  "deckSlots": 5,
+  "arrowsPerContainer": 4,
+  "gridCols": 6,
+  "gridRows": 5,
+  "containers": [
+    { "col": 2, "row": 1, "color": "green", "dir": "up", "arrows": 3 },
+    { "col": 3, "row": 3, "color": "blue", "dir": "down", "arrows": 3 },
+    { "col": 3, "row": 2, "color": "red", "dir": "left", "arrows": 3 },
+    { "col": 2, "row": 2, "color": "yellow", "dir": "left", "arrows": 3 },
+    { "col": 2, "row": 3, "color": "blue", "dir": "left", "arrows": 4 },
+    { "col": 3, "row": 1, "color": "blue", "dir": "up", "arrows": 4 },
+    { "col": 1, "row": 2, "color": "red", "dir": "up", "arrows": 4 },
+    { "col": 4, "row": 2, "color": "red", "dir": "up", "arrows": 4 },
+    { "col": 3, "row": 0, "color": "yellow", "dir": "right", "arrows": 4 },
+    { "col": 1, "row": 3, "color": "yellow", "dir": "down", "arrows": 4 },
+    { "col": 1, "row": 4, "color": "green", "dir": "down", "arrows": 4 },
+    { "col": 4, "row": 4, "color": "green", "dir": "right", "arrows": 4 },
+    { "col": 1, "row": 1, "color": "red", "dir": "left", "arrows": 4 },
+    { "col": 4, "row": 1, "color": "yellow", "dir": "up", "arrows": 4 },
+    { "col": 2, "row": 0, "color": "green", "dir": "left", "arrows": 4 },
+    { "col": 1, "row": 0, "color": "blue", "dir": "left", "arrows": 4 },
+    { "col": 3, "row": 4, "color": "yellow", "dir": "down", "arrows": 4 },
+    { "col": 4, "row": 3, "color": "yellow", "dir": "right", "arrows": 4 },
+    { "col": 5, "row": 2, "color": "yellow", "dir": "up", "arrows": 4 },
+    { "col": 2, "row": 4, "color": "green", "dir": "down", "arrows": 4 },
+    { "col": 4, "row": 0, "color": "green", "dir": "right", "arrows": 4 },
+    { "col": 5, "row": 0, "color": "green", "dir": "right", "arrows": 4 },
+    { "col": 5, "row": 1, "color": "blue", "dir": "right", "arrows": 4 },
+    { "col": 0, "row": 2, "color": "blue", "dir": "down", "arrows": 4 },
+    { "col": 5, "row": 3, "color": "blue", "dir": "right", "arrows": 4 },
+    { "col": 0, "row": 3, "color": "red", "dir": "down", "arrows": 4 },
+    { "col": 0, "row": 1, "color": "red", "dir": "up", "arrows": 4 },
+    { "col": 0, "row": 4, "color": "red", "dir": "left", "arrows": 4 }
+  ],
+  "editorMeta": {
+    "segmentsPerLoop": 4,
+    "colorsUsed": 4,
+    "dotMode": "proportional",
+    "dotsPerSegment": 6,
+    "dotDensity": 4
+  }
+}
