@@ -20,7 +20,7 @@ export interface DotState {
   mesh: THREE.Mesh;
   popT: number;
   dartObj?: THREE.Object3D;
-  dartMat?: THREE.MeshLambertMaterial;
+  dartMats?: THREE.Material[];
 }
 
 const WINDOW_CENTER = -Math.PI / 2;
@@ -307,7 +307,7 @@ export class ShapeSystem {
   }
 
   /** Take ownership of a landed dart: stick it in the dot, tail up, riding the conveyor. */
-  plantArrow(dot: DotState, obj: THREE.Object3D, mat: THREE.MeshLambertMaterial) {
+  plantArrow(dot: DotState, obj: THREE.Object3D, mats: THREE.Material[]) {
     const seg = this.segsByLoop[dot.loop][dot.segIdx];
     // tip points down into the slab, with a small random lean for a thrown-dart feel
     obj.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, -1));
@@ -315,9 +315,13 @@ export class ShapeSystem {
       new THREE.Euler((Math.random() - 0.5) * 0.25, (Math.random() - 0.5) * 0.25, 0)
     );
     obj.quaternion.premultiply(lean);
+    // position NOW, in the segment's local space — waiting for the next update
+    // would render one frame at stale world coordinates (the arrival flicker)
+    const p = this.loopPoint(dot.loop, dot.baseT + this.phase);
+    obj.position.set(p.x, p.y, SLAB_H + 0.13);
     seg.group.add(obj);
     dot.dartObj = obj;
-    dot.dartMat = mat;
+    dot.dartMats = mats;
   }
 
   /** Ignores the window (everything sweeps through it each lap): can this color ever fire again? */
@@ -366,7 +370,7 @@ export class ShapeSystem {
         seg.band.material.opacity = 1 - ease;
         for (const dot of seg.dots) {
           (dot.mesh.material as THREE.MeshLambertMaterial).opacity = 1 - ease;
-          if (dot.dartMat) dot.dartMat.opacity = 1 - ease;
+          if (dot.dartMats) for (const m of dot.dartMats) m.opacity = 1 - ease;
         }
         if (seg.destroyT >= 1) {
           this.removeSegMeshes(seg);
@@ -382,9 +386,9 @@ export class ShapeSystem {
       (dot.mesh.material as THREE.Material).dispose();
       if (dot.dartObj) {
         seg.group.remove(dot.dartObj);
-        dot.dartMat?.dispose();
+        if (dot.dartMats) for (const m of dot.dartMats) m.dispose();
         dot.dartObj = undefined;
-        dot.dartMat = undefined;
+        dot.dartMats = undefined;
       }
     }
     seg.band.dispose();
