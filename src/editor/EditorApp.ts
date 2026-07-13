@@ -25,7 +25,7 @@ export interface EditorOptions {
 type Stage = 1 | 2;
 type Tool = 'rotate' | 'paint' | 'erase';
 
-const SHAPE_NAMES = ['circle', 'square', 'triangle', 'hexagon', 'star', 'heart'] as const;
+const SHAPE_NAMES = ['circle', 'square', 'triangle', 'hexagon', 'star', 'heart', 'blob'] as const;
 const SHAPE_ICONS: Record<string, string> = {
   circle: '○ Circle',
   square: '□ Square',
@@ -33,6 +33,7 @@ const SHAPE_ICONS: Record<string, string> = {
   hexagon: '⬡ Hexagon',
   star: '✦ Star',
   heart: '♥ Heart',
+  blob: '✺ Blob',
 };
 
 export class EditorApp {

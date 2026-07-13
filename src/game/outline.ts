@@ -98,6 +98,25 @@ export function outlinePoints(kind: OutlineKind, radius: number): THREE.Vector2[
       }
       return raw.map((p) => p.multiplyScalar(radius / maxLen));
     }
+    case 'blob': {
+      // asymmetric organic blob: layered sine harmonics on the radius.
+      // r stays well positive, so every center ray crosses the outline once
+      // (the invariant the conveyor + clear-ray rules need).
+      const raw: THREE.Vector2[] = [];
+      let maxLen = 0;
+      for (let i = 0; i < 128; i++) {
+        const a = (i / 128) * Math.PI * 2;
+        const r =
+          1 +
+          0.14 * Math.sin(2 * a + 0.5) +
+          0.11 * Math.sin(3 * a + 1.7) +
+          0.08 * Math.sin(5 * a + 3.1) +
+          0.05 * Math.sin(7 * a + 0.9);
+        raw.push(new THREE.Vector2(Math.cos(a) * r, Math.sin(a) * r));
+        maxLen = Math.max(maxLen, r);
+      }
+      return raw.map((p) => p.multiplyScalar(radius / maxLen));
+    }
   }
 }
 
