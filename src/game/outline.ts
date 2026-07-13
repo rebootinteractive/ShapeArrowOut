@@ -74,13 +74,25 @@ export function outlinePoints(kind: OutlineKind, radius: number): THREE.Vector2[
       return pts;
     }
     case 'heart': {
-      // classic parametric heart, recentred so radial band scaling stays star-shaped
+      // crisp icon-style heart from Bézier curves (deep cleft, pointed tip),
+      // pre-stretched vertically to counter the pie tilt's foreshortening
+      const s = new THREE.Shape();
+      s.moveTo(12, 21.35);
+      s.lineTo(10.55, 20.03);
+      s.bezierCurveTo(5.4, 15.36, 2, 12.28, 2, 8.5);
+      s.bezierCurveTo(2, 5.42, 4.42, 3, 7.5, 3);
+      s.bezierCurveTo(9.24, 3, 10.91, 3.81, 12, 5.09);
+      s.bezierCurveTo(13.09, 3.81, 14.76, 3, 16.5, 3);
+      s.bezierCurveTo(19.58, 3, 22, 5.42, 22, 8.5);
+      s.bezierCurveTo(22, 12.28, 18.6, 15.36, 13.45, 20.04);
+      s.lineTo(12, 21.35);
+      const spaced = s.getSpacedPoints(96);
+      spaced.pop(); // closed path: last point duplicates the first
       const raw: THREE.Vector2[] = [];
       let maxLen = 0;
-      for (let i = 0; i < 96; i++) {
-        const t = (i / 96) * Math.PI * 2;
-        const x = 16 * Math.pow(Math.sin(t), 3);
-        const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 6 * Math.cos(3 * t) - Math.cos(4 * t) + 2;
+      for (const p of spaced) {
+        const x = p.x - 12;
+        const y = -(p.y - 12.2) * 1.15; // flip SVG y-down, counter the tilt squash
         raw.push(new THREE.Vector2(x, y));
         maxLen = Math.max(maxLen, Math.hypot(x, y));
       }
