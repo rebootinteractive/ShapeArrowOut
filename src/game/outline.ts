@@ -73,6 +73,19 @@ export function outlinePoints(kind: OutlineKind, radius: number): THREE.Vector2[
       }
       return pts;
     }
+    case 'heart': {
+      // classic parametric heart, recentred so radial band scaling stays star-shaped
+      const raw: THREE.Vector2[] = [];
+      let maxLen = 0;
+      for (let i = 0; i < 96; i++) {
+        const t = (i / 96) * Math.PI * 2;
+        const x = 16 * Math.pow(Math.sin(t), 3);
+        const y = 13 * Math.cos(t) - 5 * Math.cos(2 * t) - 6 * Math.cos(3 * t) - Math.cos(4 * t) + 2;
+        raw.push(new THREE.Vector2(x, y));
+        maxLen = Math.max(maxLen, Math.hypot(x, y));
+      }
+      return raw.map((p) => p.multiplyScalar(radius / maxLen));
+    }
   }
 }
 

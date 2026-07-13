@@ -2,7 +2,7 @@ export type ColorKey = 'red' | 'blue' | 'green' | 'yellow' | 'purple';
 
 export type Dir = 'up' | 'down' | 'left' | 'right';
 
-export type OutlineKind = 'circle' | 'square' | 'triangle' | 'hexagon' | 'star';
+export type OutlineKind = 'circle' | 'square' | 'triangle' | 'hexagon' | 'star' | 'heart';
 
 export type DotMode = 'fixed' | 'proportional';
 

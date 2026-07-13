@@ -24,13 +24,14 @@ export interface EditorOptions {
 type Stage = 1 | 2;
 type Tool = 'rotate' | 'paint' | 'erase';
 
-const SHAPE_NAMES = ['circle', 'square', 'triangle', 'hexagon', 'star'] as const;
+const SHAPE_NAMES = ['circle', 'square', 'triangle', 'hexagon', 'star', 'heart'] as const;
 const SHAPE_ICONS: Record<string, string> = {
   circle: '○ Circle',
   square: '□ Square',
   triangle: '△ Triangle',
   hexagon: '⬡ Hexagon',
   star: '✦ Star',
+  heart: '♥ Heart',
 };
 
 export class EditorApp {
