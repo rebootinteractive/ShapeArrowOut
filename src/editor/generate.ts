@@ -9,7 +9,7 @@ import type {
 } from '../shared/types';
 import { DIRS, DIR_VEC } from '../shared/types';
 import { COLOR_KEYS } from '../shared/colors';
-import { buildPath } from '../game/outline';
+import { loopPerimeter } from '../game/outline';
 
 export interface DemandParams {
   shape: OutlineKind;
@@ -28,8 +28,8 @@ export function buildLoops(p: DemandParams): LoopDef[] {
   for (let li = 0; li < p.loopCount; li++) {
     let dots = p.dotsPerSegment;
     if (p.dotMode === 'proportional') {
-      const path = buildPath(p.shape, li, SHAPE_RADIUS);
-      const segLen = path.totalLength / p.segmentsPerLoop;
+      const perimeter = loopPerimeter(p.shape, li, p.loopCount, SHAPE_RADIUS);
+      const segLen = perimeter / p.segmentsPerLoop;
       dots = Math.max(2, Math.round(segLen * p.dotDensity));
     }
     const segs: SegmentDef[] = [];

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import type { ColorKey, LoopDef, OutlineKind } from '../shared/types';
 import { COLOR_HEX } from '../shared/colors';
-import { OutlinePath, buildPath, loopRadius } from './outline';
+import { OutlinePath, computeLoopLayout, outlinePoints } from './outline';
 
 export interface ShapeConfig {
   shape: OutlineKind;
@@ -25,10 +25,6 @@ export interface DotState {
 const WINDOW_CENTER = -Math.PI / 2;
 const WINDOW_HALF = Math.PI / 4; // 90° window at the bottom of the shape
 const SLAB_H = 0.14; // segment thickness
-// Radial half-width as a FRACTION of local radius, so band edges are scaled copies
-// of the outline. Loops shrink by 0.74 per level; overlap-free requires
-// (1 - f) > 0.74 * (1 + f)  →  f < 0.149. 0.11 leaves a visible gap everywhere.
-const BAND_F = 0.11;
 const GAP_FRAC = 0.006; // loop-fraction gap on each side so pie slices read separately
 const DOT_RADIUS = 0.055;
 const TILT = -0.62; // lean the whole pie back so slab sides are visible
@@ -41,8 +37,9 @@ function normAngle(a: number): number {
 }
 
 /**
- * One pie-slice slab: a thick band riding the outline conveyor.
- * Preallocated buffers, positions rewritten every frame as the segment slides.
+ * One pie-slice slab: a thick band riding the outline conveyor at a constant
+ * radial offset from the base outline. Preallocated buffers, positions rewritten
+ * every frame as the segment slides.
  */
 class SegmentBand {
   readonly mesh: THREE.Mesh;
@@ -50,7 +47,14 @@ class SegmentBand {
   private positions: Float32Array;
   private samples: number;
 
-  constructor(private path: OutlinePath, private tStart: number, private tWidth: number, color: ColorKey) {
+  constructor(
+    private path: OutlinePath,
+    private tStart: number,
+    private tWidth: number,
+    color: ColorKey,
+    private dOff: number,
+    private bandW: number
+  ) {
     this.samples = Math.max(10, Math.ceil(this.tWidth * 140));
     const n = this.samples;
     const vertCount = 6 * (n + 1) + 8;
@@ -81,12 +85,6 @@ class SegmentBand {
     this.mesh = new THREE.Mesh(geo, this.material);
   }
 
-  /** Local (untilted) position on the band's centerline top at loop param t. */
-  topPointAt(t: number, phase: number): THREE.Vector3 {
-    const p = this.path.pointAt(t + phase);
-    return new THREE.Vector3(p.x, p.y, SLAB_H);
-  }
-
   updateGeometry(phase: number) {
     const n = this.samples;
     const pos = this.positions;
@@ -104,8 +102,11 @@ class SegmentBand {
     for (let j = 0; j <= n; j++) {
       const t = t0 + (span * j) / n;
       const p = this.path.pointAt(t + phase);
-      const ix = p.x * (1 - BAND_F), iy = p.y * (1 - BAND_F);
-      const ox = p.x * (1 + BAND_F), oy = p.y * (1 + BAND_F);
+      const len = Math.max(Math.hypot(p.x, p.y), 1e-5);
+      const fIn = Math.max((len - this.dOff - this.bandW) / len, 0.01);
+      const fOut = Math.max((len - this.dOff + this.bandW) / len, 0.02);
+      const ix = p.x * fIn, iy = p.y * fIn;
+      const ox = p.x * fOut, oy = p.y * fOut;
       set(j * 2, ix, iy, SLAB_H);
       set(j * 2 + 1, ox, oy, SLAB_H);
       set(2 * (n + 1) + j * 2, ox, oy, SLAB_H);
@@ -150,7 +151,8 @@ interface SegState {
 
 export class ShapeSystem {
   private group = new THREE.Group();
-  private paths: OutlinePath[] = [];
+  private basePath: OutlinePath;
+  private dOff: number[];
   private segs: SegState[] = [];
   private segsByLoop: SegState[][] = [];
   private phase = 0;
@@ -167,8 +169,13 @@ export class ShapeSystem {
     this.group.rotation.x = TILT;
     scene.add(this.group);
 
+    this.basePath = new OutlinePath(outlinePoints(cfg.shape, outerRadius));
+    const layout = computeLoopLayout(cfg.shape, cfg.loops.length, outerRadius);
+    this.dOff = layout.d;
+    const bandW = layout.bandW;
+
     // window wedge indicator, flat under the slabs
-    const innerR = loopRadius(cfg.loops.length - 1, outerRadius) * 0.6;
+    const innerR = Math.max(layout.minRadius - (layout.d[layout.d.length - 1] ?? 0) - bandW - 0.08, 0.12);
     const wedgeGeo = new THREE.RingGeometry(innerR, outerRadius * 1.14, 40, 1, Math.PI * 1.25, Math.PI / 2);
     this.wedge = new THREE.Mesh(
       wedgeGeo,
@@ -178,14 +185,12 @@ export class ShapeSystem {
     this.group.add(this.wedge);
 
     cfg.loops.forEach((loopDef, li) => {
-      const path = buildPath(cfg.shape, li, outerRadius);
-      this.paths.push(path);
       const nSegs = loopDef.segments.length;
       const loopSegs: SegState[] = [];
       loopDef.segments.forEach((segDef, si) => {
         const start = si / nSegs;
         const width = 1 / nSegs;
-        const band = new SegmentBand(path, start, width, segDef.color);
+        const band = new SegmentBand(this.basePath, start, width, segDef.color, this.dOff[li], bandW);
         const segGroup = new THREE.Group();
         segGroup.add(band.mesh);
         this.group.add(segGroup);
@@ -226,6 +231,14 @@ export class ShapeSystem {
     this.update(0);
   }
 
+  /** Loop-local 2D point for a dot's current conveyor position. */
+  private loopPoint(loop: number, t: number): THREE.Vector2 {
+    const p = this.basePath.pointAt(t);
+    const len = Math.max(Math.hypot(p.x, p.y), 1e-5);
+    const f = Math.max((len - this.dOff[loop]) / len, 0.01);
+    return new THREE.Vector2(p.x * f, p.y * f);
+  }
+
   private segAtParam(loop: number, t: number): SegState {
     const loopSegs = this.segsByLoop[loop];
     const idx = Math.min(Math.floor((t % 1) * loopSegs.length), loopSegs.length - 1);
@@ -241,7 +254,8 @@ export class ShapeSystem {
   }
 
   private dotAngle(dot: DotState): number {
-    const p = this.paths[dot.loop].pointAt(dot.baseT + this.phase);
+    // radial offset preserves the angle, so the base outline point is enough
+    const p = this.basePath.pointAt(dot.baseT + this.phase);
     return Math.atan2(p.y, p.x);
   }
 
@@ -250,7 +264,7 @@ export class ShapeSystem {
   }
 
   dotWorldPos(dot: DotState): THREE.Vector3 {
-    const p = this.paths[dot.loop].pointAt(dot.baseT + this.phase);
+    const p = this.loopPoint(dot.loop, dot.baseT + this.phase);
     return this.group.localToWorld(new THREE.Vector3(p.x, p.y, SLAB_H + DOT_RADIUS));
   }
 
@@ -329,7 +343,7 @@ export class ShapeSystem {
 
       seg.band.updateGeometry(this.phase);
       for (const dot of seg.dots) {
-        const p = this.paths[seg.loop].pointAt(dot.baseT + this.phase);
+        const p = this.loopPoint(seg.loop, dot.baseT + this.phase);
         dot.mesh.position.set(p.x, p.y, SLAB_H + DOT_RADIUS * 0.55);
         dot.dartObj?.position.set(p.x, p.y, SLAB_H + 0.13);
         if (dot.popT >= 0) {

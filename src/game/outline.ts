@@ -101,11 +101,55 @@ export function outlinePoints(kind: OutlineKind, radius: number): THREE.Vector2[
   }
 }
 
-/** Radius for nested loop i (0 = outermost). */
-export function loopRadius(i: number, outerRadius: number): number {
-  return outerRadius * Math.pow(0.74, i);
+/**
+ * Nested loops are CONSTANT radial offsets of the same base outline: loop i sits
+ * d[i] world units inward, and every loop's band has the same half-width. Because
+ * all loops sample the base path at the same parameter t, segments at equal
+ * fractions stay exactly radially aligned on any shape.
+ */
+export interface LoopLayout {
+  d: number[]; // inward radial offset per loop (d[0] = 0)
+  bandW: number; // band half-width, identical for all loops
+  minRadius: number; // smallest |p| on the base outline
 }
 
-export function buildPath(kind: OutlineKind, loopIndex: number, outerRadius: number): OutlinePath {
-  return new OutlinePath(outlinePoints(kind, loopRadius(loopIndex, outerRadius)));
+export function computeLoopLayout(kind: OutlineKind, loopCount: number, outerRadius: number): LoopLayout {
+  const pts = outlinePoints(kind, outerRadius);
+  let m = Infinity;
+  for (const p of pts) m = Math.min(m, Math.hypot(p.x, p.y));
+  const MAX_W = 0.115;
+  const margin = 0.12;
+  let spacing = 0;
+  let w = MAX_W;
+  if (loopCount > 1) {
+    spacing = Math.min(0.42, (m - MAX_W - margin) / (loopCount - 1));
+    spacing = Math.max(spacing, 0.12);
+    w = Math.max(Math.min(MAX_W, (spacing - 0.05) / 2), 0.04);
+  }
+  return {
+    d: Array.from({ length: loopCount }, (_, i) => i * spacing),
+    bandW: w,
+    minRadius: m,
+  };
+}
+
+/** Perimeter of nested loop li (for length-proportional dot counts). */
+export function loopPerimeter(kind: OutlineKind, li: number, loopCount: number, outerRadius: number): number {
+  const base = new OutlinePath(outlinePoints(kind, outerRadius));
+  const { d } = computeLoopLayout(kind, loopCount, outerRadius);
+  let sum = 0;
+  let prev: THREE.Vector2 | null = null;
+  let first: THREE.Vector2 | null = null;
+  const N = 200;
+  for (let i = 0; i < N; i++) {
+    const p = base.pointAt(i / N);
+    const len = Math.max(Math.hypot(p.x, p.y), 1e-5);
+    const f = Math.max((len - d[li]) / len, 0.01);
+    const q = new THREE.Vector2(p.x * f, p.y * f);
+    if (prev) sum += prev.distanceTo(q);
+    else first = q;
+    prev = q;
+  }
+  if (prev && first) sum += prev.distanceTo(first);
+  return sum;
 }
