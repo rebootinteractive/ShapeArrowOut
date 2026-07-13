@@ -26,7 +26,7 @@ const SLAB_H = 0.14; // segment thickness
 const BAND_W = 0.125; // radial half-width of a segment slab
 const GAP_FRAC = 0.006; // loop-fraction gap on each side so pie slices read separately
 const DOT_RADIUS = 0.055;
-const TILT = -0.42; // lean the whole pie back so slab sides are visible
+const TILT = -0.62; // lean the whole pie back so slab sides are visible
 const SOCKET_COLOR = 0x141824;
 
 function normAngle(a: number): number {
