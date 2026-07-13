@@ -51,6 +51,10 @@ export class GameApp {
 
     this.camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
 
+    const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+    sun.position.set(2.5, 4, 6);
+    this.scene.add(sun, new THREE.AmbientLight(0xffffff, 0.85));
+
     this.shape = new ShapeSystem(
       this.scene,
       { shape: level.shape, loops: level.loops, lapSeconds: level.lapSeconds },

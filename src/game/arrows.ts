@@ -65,8 +65,10 @@ export class ArrowSystem {
       const step = Math.min(dt / remaining, 1);
       const dx = target.x - f.mesh.position.x;
       const dy = target.y - f.mesh.position.y;
+      const dz = target.z - f.mesh.position.z;
       f.mesh.position.x += dx * step;
       f.mesh.position.y += dy * step;
+      f.mesh.position.z += dz * step;
       if (dx * dx + dy * dy > 1e-6) f.mesh.rotation.z = Math.atan2(dy, dx) - Math.PI / 2;
     }
   }

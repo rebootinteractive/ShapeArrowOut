@@ -139,6 +139,9 @@ export class EditorApp {
     this.scene.background = new THREE.Color(0x1c1f2a);
     this.canvasWrap.appendChild(this.renderer.domElement);
     this.camera = new THREE.PerspectiveCamera(40, 1, 0.1, 100);
+    const sun = new THREE.DirectionalLight(0xffffff, 1.6);
+    sun.position.set(2.5, 4, 6);
+    this.scene.add(sun, new THREE.AmbientLight(0xffffff, 0.85));
     this.renderer.domElement.addEventListener('pointerdown', this.onPointerDown);
 
     this.resizeObserver = new ResizeObserver(() => this.handleResize());
