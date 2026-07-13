@@ -10,6 +10,7 @@ import type {
 import { DIRS, DIR_VEC } from '../shared/types';
 import { COLOR_KEYS } from '../shared/colors';
 import { loopPerimeter } from '../game/outline';
+import { loadSettings } from '../shared/settings';
 
 export interface DemandParams {
   shape: OutlineKind;
@@ -21,14 +22,14 @@ export interface DemandParams {
   dotDensity: number; // dots per world-unit of segment length (proportional mode)
 }
 
-const SHAPE_RADIUS = 1.58; // matches GameApp so proportional lengths are the real ones
 
 export function buildLoops(p: DemandParams): LoopDef[] {
   const loops: LoopDef[] = [];
   for (let li = 0; li < p.loopCount; li++) {
     let dots = p.dotsPerSegment;
     if (p.dotMode === 'proportional') {
-      const perimeter = loopPerimeter(p.shape, li, p.loopCount, SHAPE_RADIUS);
+      // real in-game lengths: use the global shape size setting
+      const perimeter = loopPerimeter(p.shape, li, p.loopCount, loadSettings().shapeRadius);
       const segLen = perimeter / p.segmentsPerLoop;
       dots = Math.max(2, Math.round(segLen * p.dotDensity));
     }

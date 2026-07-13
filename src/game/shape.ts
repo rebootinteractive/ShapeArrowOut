@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import type { ColorKey, LoopDef, OutlineKind } from '../shared/types';
 import { COLOR_HEX } from '../shared/colors';
 import { OutlinePath, computeLoopLayout, outlinePoints } from './outline';
+import { loadSettings } from '../shared/settings';
 
 export interface ShapeConfig {
   shape: OutlineKind;
@@ -27,7 +28,6 @@ const WINDOW_HALF = Math.PI / 4; // 90° window at the bottom of the shape
 const SLAB_H = 0.14; // segment thickness
 const GAP_FRAC = 0.006; // loop-fraction gap on each side so pie slices read separately
 const DOT_RADIUS = 0.055;
-const TILT = -0.62; // lean the whole pie back so slab sides are visible
 const SOCKET_COLOR = 0x141824;
 
 function normAngle(a: number): number {
@@ -166,7 +166,7 @@ export class ShapeSystem {
     private outerRadius: number
   ) {
     this.group.position.set(center.x, center.y, 0);
-    this.group.rotation.x = TILT;
+    this.group.rotation.x = -THREE.MathUtils.degToRad(loadSettings().tiltDeg);
     scene.add(this.group);
 
     this.basePath = new OutlinePath(outlinePoints(cfg.shape, outerRadius));

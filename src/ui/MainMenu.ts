@@ -1,6 +1,7 @@
 import type { LevelData } from '../shared/types';
 import { ALL_LEVELS } from '../levels';
 import { deleteCustomLevel, loadCustomLevels } from './storage';
+import { DEFAULT_SETTINGS, loadSettings, saveSettings } from '../shared/settings';
 
 export interface MainMenuOptions {
   onPlay: (level: LevelData) => void;
@@ -24,7 +25,10 @@ export class MainMenu {
 
   private render() {
     this.root.innerHTML = `
-      <div class="menu-title">Shape Arrow Out</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div class="menu-title">Shape Arrow Out</div>
+        <button class="btn ghost small" data-act="settings">⚙</button>
+      </div>
       <div class="menu-sub">Free the arrows, feed the shape, don't clog the deck.</div>
       <div class="menu-section-label">Levels</div>
       <div class="level-list" data-list="builtin"></div>
@@ -52,6 +56,63 @@ export class MainMenu {
     }
 
     this.root.querySelector('[data-act="new"]')!.addEventListener('click', () => this.opts.onOpenEditor());
+    this.root.querySelector('[data-act="settings"]')!.addEventListener('click', () => this.showSettings());
+  }
+
+  private showSettings() {
+    const s = loadSettings();
+    const m = document.createElement('div');
+    m.className = 'modal';
+    const slider = (
+      label: string,
+      key: 'shapeRadius' | 'tiltDeg',
+      min: number,
+      max: number,
+      step: number,
+      unit: string
+    ) => `
+      <div style="margin-bottom:16px">
+        <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:6px">
+          <span>${label}</span>
+          <span style="color:var(--muted)" data-val="${key}">${s[key]}${unit}</span>
+        </div>
+        <input type="range" style="width:100%" min="${min}" max="${max}" step="${step}" value="${s[key]}" data-set="${key}" data-unit="${unit}">
+      </div>`;
+    m.innerHTML = `
+      <div class="modal-card">
+        <h2>Settings</h2>
+        <p>Applies the next time a level or the editor opens.</p>
+        ${slider('Shape size', 'shapeRadius', 1.3, 2.2, 0.05, '')}
+        ${slider('Pie tilt', 'tiltDeg', 10, 50, 1, '°')}
+        <div class="modal-actions">
+          <button class="btn ghost" data-act="reset">Reset</button>
+          <button class="btn" data-act="close">Done</button>
+        </div>
+      </div>`;
+    const sync = () => {
+      m.querySelectorAll('input[data-set]').forEach((el) => {
+        const input = el as HTMLInputElement;
+        const key = input.dataset.set as 'shapeRadius' | 'tiltDeg';
+        input.value = String(loadSettings()[key]);
+        m.querySelector(`[data-val="${key}"]`)!.textContent = `${input.value}${input.dataset.unit}`;
+      });
+    };
+    m.querySelectorAll('input[data-set]').forEach((el) => {
+      const input = el as HTMLInputElement;
+      input.addEventListener('input', () => {
+        const cur = loadSettings();
+        const key = input.dataset.set as 'shapeRadius' | 'tiltDeg';
+        cur[key] = Number(input.value);
+        saveSettings(cur);
+        m.querySelector(`[data-val="${key}"]`)!.textContent = `${input.value}${input.dataset.unit}`;
+      });
+    });
+    m.querySelector('[data-act="reset"]')!.addEventListener('click', () => {
+      saveSettings({ ...DEFAULT_SETTINGS });
+      sync();
+    });
+    m.querySelector('[data-act="close"]')!.addEventListener('click', () => m.remove());
+    this.root.appendChild(m);
   }
 
   private levelCard(level: LevelData, custom: boolean): HTMLDivElement {

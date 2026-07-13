@@ -5,6 +5,7 @@ import { COLOR_CSS, COLOR_KEYS } from '../shared/colors';
 import { ShapeSystem } from '../game/shape';
 import { Yard } from '../game/yard';
 import { saveCustomLevel } from '../ui/storage';
+import { loadSettings } from '../shared/settings';
 import {
   DemandParams,
   buildDispatchList,
@@ -196,7 +197,7 @@ export class EditorApp {
       this.scene,
       { shape: this.params.shape, loops: buildLoops(this.params), lapSeconds: this.lapSeconds },
       new THREE.Vector2(0, 0),
-      1.58
+      loadSettings().shapeRadius
     );
   }
 
@@ -215,7 +216,8 @@ export class EditorApp {
   // ------------------------------------------------------------- camera
 
   private fitCamera() {
-    const rect = { w: 4.4, h: 4.4 };
+    const size = this.stage === 1 ? Math.max(4.4, loadSettings().shapeRadius * 2 + 1.1) : 4.4;
+    const rect = { w: size, h: size };
     const fovV = THREE.MathUtils.degToRad(this.camera.fov);
     const fovH = 2 * Math.atan(Math.tan(fovV / 2) * this.camera.aspect);
     const d = Math.max((rect.h / 2 + 0.3) / Math.tan(fovV / 2), (rect.w / 2 + 0.3) / Math.tan(fovH / 2));

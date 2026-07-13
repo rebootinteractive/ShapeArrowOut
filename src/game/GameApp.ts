@@ -5,6 +5,7 @@ import { Yard } from './yard';
 import { Deck } from './deck';
 import { ArrowSystem } from './arrows';
 import { Hud } from './Hud';
+import { loadSettings } from '../shared/settings';
 
 export interface GameOptions {
   level: LevelData;
@@ -15,9 +16,6 @@ export interface GameOptions {
 
 // world layout (portrait)
 const WORLD_W = 4.6;
-const WORLD_H = 9.4;
-const SHAPE_CENTER = new THREE.Vector2(0, 2.62);
-const SHAPE_RADIUS = 1.58;
 const DECK_Y = 0.18;
 const YARD_CENTER = new THREE.Vector2(0, -2.62);
 const YARD_W = 4.3;
@@ -40,6 +38,7 @@ export class GameApp {
   private winDelay = -1;
   private loseCheckTimer = 0;
   private pendingDispatch = 0;
+  private worldH = 9.4;
   private onPointerDown = (ev: PointerEvent) => this.handleTap(ev);
 
   constructor(private parent: HTMLElement, private opts: GameOptions) {
@@ -55,11 +54,15 @@ export class GameApp {
     sun.position.set(2.5, 4, 6);
     this.scene.add(sun, new THREE.AmbientLight(0xffffff, 0.85));
 
+    // shape size comes from global settings; keep its window wedge clear of the deck
+    const shapeR = loadSettings().shapeRadius;
+    const shapeCenterY = 0.66 + 1.14 * shapeR;
+    this.worldH = Math.max(9.4, 2 * (shapeCenterY + shapeR + 0.45));
     this.shape = new ShapeSystem(
       this.scene,
       { shape: level.shape, loops: level.loops, lapSeconds: level.lapSeconds },
-      SHAPE_CENTER,
-      SHAPE_RADIUS
+      new THREE.Vector2(0, shapeCenterY),
+      shapeR
     );
     this.yard = new Yard(
       this.scene,
@@ -101,7 +104,7 @@ export class GameApp {
     this.camera.aspect = w / h;
     const fovV = THREE.MathUtils.degToRad(this.camera.fov);
     const fovH = 2 * Math.atan(Math.tan(fovV / 2) * this.camera.aspect);
-    const dV = (WORLD_H / 2 + 0.2) / Math.tan(fovV / 2);
+    const dV = (this.worldH / 2 + 0.2) / Math.tan(fovV / 2);
     const dH = (WORLD_W / 2 + 0.2) / Math.tan(fovH / 2);
     this.camera.position.set(0, 0, Math.max(dV, dH));
     this.camera.lookAt(0, 0, 0);
