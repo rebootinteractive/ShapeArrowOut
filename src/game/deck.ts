@@ -23,8 +23,13 @@ interface DeckItem {
 export interface DeckFireContext {
   requestDot(color: ColorKey): DotState | null;
   dotWorldPos(dot: DotState): THREE.Vector3;
-  onArrowArrive(dot: DotState): void;
-  spawnArrow(from: THREE.Vector3, color: ColorKey, getTarget: () => THREE.Vector3, onArrive: () => void): void;
+  onArrowArrive(dot: DotState, obj: THREE.Group, mat: THREE.MeshLambertMaterial): void;
+  spawnArrow(
+    from: THREE.Vector3,
+    color: ColorKey,
+    getTarget: () => THREE.Vector3,
+    onArrive: (obj: THREE.Group, mat: THREE.MeshLambertMaterial) => void
+  ): void;
 }
 
 export class Deck {
@@ -152,8 +157,8 @@ export class Deck {
           item.remaining--;
           item.inFlight++;
           item.label.set(item.remaining);
-          ctx.spawnArrow(slotPos.clone(), item.color, () => ctx.dotWorldPos(dot), () => {
-            ctx.onArrowArrive(dot);
+          ctx.spawnArrow(slotPos.clone(), item.color, () => ctx.dotWorldPos(dot), (obj, mat) => {
+            ctx.onArrowArrive(dot, obj, mat);
             item.inFlight--;
           });
           item.cooldown = FIRE_INTERVAL;

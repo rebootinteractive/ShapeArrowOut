@@ -145,7 +145,10 @@ export class GameApp {
     this.deck.update(dt, {
       requestDot: (color) => this.shape.requestDot(color),
       dotWorldPos: (dot) => this.shape.dotWorldPos(dot),
-      onArrowArrive: (dot) => this.shape.fillDot(dot),
+      onArrowArrive: (dot, obj, mat) => {
+        this.shape.fillDot(dot);
+        this.shape.plantArrow(dot, obj, mat);
+      },
       spawnArrow: (from, color, getTarget, onArrive) => this.arrows.spawn(from, color, getTarget, onArrive),
     });
 

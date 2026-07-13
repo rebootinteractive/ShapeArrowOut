@@ -18,6 +18,8 @@ export interface DotState {
   claimed: boolean;
   mesh: THREE.Mesh;
   popT: number;
+  dartObj?: THREE.Object3D;
+  dartMat?: THREE.MeshLambertMaterial;
 }
 
 const WINDOW_CENTER = -Math.PI / 2;
@@ -290,6 +292,20 @@ export class ShapeSystem {
     }
   }
 
+  /** Take ownership of a landed dart: stick it in the dot, tail up, riding the conveyor. */
+  plantArrow(dot: DotState, obj: THREE.Object3D, mat: THREE.MeshLambertMaterial) {
+    const seg = this.segsByLoop[dot.loop][dot.segIdx];
+    // tip points down into the slab, with a small random lean for a thrown-dart feel
+    obj.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), new THREE.Vector3(0, 0, -1));
+    const lean = new THREE.Quaternion().setFromEuler(
+      new THREE.Euler((Math.random() - 0.5) * 0.25, (Math.random() - 0.5) * 0.25, 0)
+    );
+    obj.quaternion.premultiply(lean);
+    seg.group.add(obj);
+    dot.dartObj = obj;
+    dot.dartMat = mat;
+  }
+
   /** Ignores the window (everything sweeps through it each lap): can this color ever fire again? */
   hasFireableEver(color: ColorKey): boolean {
     for (const seg of this.segs) {
@@ -315,6 +331,7 @@ export class ShapeSystem {
       for (const dot of seg.dots) {
         const p = this.paths[seg.loop].pointAt(dot.baseT + this.phase);
         dot.mesh.position.set(p.x, p.y, SLAB_H + DOT_RADIUS * 0.55);
+        dot.dartObj?.position.set(p.x, p.y, SLAB_H + 0.13);
         if (dot.popT >= 0) {
           dot.popT += dt / 0.22;
           const t = Math.min(dot.popT, 1);
@@ -335,6 +352,7 @@ export class ShapeSystem {
         seg.band.material.opacity = 1 - ease;
         for (const dot of seg.dots) {
           (dot.mesh.material as THREE.MeshLambertMaterial).opacity = 1 - ease;
+          if (dot.dartMat) dot.dartMat.opacity = 1 - ease;
         }
         if (seg.destroyT >= 1) {
           this.removeSegMeshes(seg);
@@ -348,6 +366,12 @@ export class ShapeSystem {
     for (const dot of seg.dots) {
       seg.group.remove(dot.mesh);
       (dot.mesh.material as THREE.Material).dispose();
+      if (dot.dartObj) {
+        seg.group.remove(dot.dartObj);
+        dot.dartMat?.dispose();
+        dot.dartObj = undefined;
+        dot.dartMat = undefined;
+      }
     }
     seg.band.dispose();
     this.group.remove(seg.group);
